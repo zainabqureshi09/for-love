@@ -1,42 +1,14 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row =>
-                    row.some(cell => cell !== '' && cell !== null && cell !== undefined)
-                );
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painted Love for Aryan</title>
+  <title>Stars for Aryan</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/konva@8.3.14/konva.min.js"></script>
   <style>
     body {
-      background: linear-gradient(135deg, #f9e1e8, #e1f0fa);
+      background: linear-gradient(to bottom, #0a0a23, #1a1a4d);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -44,229 +16,180 @@
       align-items: center;
       font-family: 'Merienda', cursive;
       overflow: hidden;
-      margin: 0;
     }
-    canvas {
+    #container {
       border-radius: 1rem;
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-      background: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
     }
     #message {
       opacity: 0;
       transition: opacity 2s ease-in;
-      text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
-      margin-top: 2rem;
-      text-align: center;
-      max-width: 90%;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
     }
     #message.show {
       opacity: 1;
     }
     #title {
-      animation: pulse 2.5s infinite ease-in-out;
-      transition: all 0.3s ease;
-    }
-    #title:hover {
-      text-shadow: 0 0 20px rgba(45, 212, 191, 0.9);
-      transform: scale(1.05);
+      animation: pulse 3s infinite ease-in-out;
     }
     @keyframes pulse {
-      0%, 100% { text-shadow: 0 0 8px rgba(45, 212, 191, 0.5); }
-      50% { text-shadow: 0 0 15px rgba(45, 212, 191, 0.8); }
-    }
-    .letter {
-      display: inline-block;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: all 0.4s ease;
-    }
-    .letter.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-    .brushstroke {
-      position: absolute;
-      background: radial-gradient(circle, rgba(255, 105, 180, 0.8), rgba(255, 105, 180, 0));
-      border-radius: 50%;
-      pointer-events: none;
-    }
-    .sparkle {
-      position: absolute;
-      background: #ffd700;
-      border-radius: 50%;
-      box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
-      pointer-events: none;
-    }
-    .watercolor {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      opacity: 0.4;
-      z-index: -1;
-      background: radial-gradient(circle, rgba(255, 182, 193, 0.5), rgba(135, 206, 235, 0.5));
-      animation: flow 12s infinite ease-in-out;
-    }
-    @keyframes flow {
-      0% { transform: scale(1); opacity: 0.4; }
-      50% { transform: scale(1.1); opacity: 0.6; }
-      100% { transform: scale(1); opacity: 0.4; }
+      0%, 100% { transform: scale(1); text-shadow: 0 0 10px rgba(45, 212, 191, 0.5); }
+      50% { transform: scale(1.05); text-shadow: 0 0 20px rgba(45, 212, 191, 0.8); }
     }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Merienda:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="watercolor"></div>
-  <canvas id="canvas"></canvas>
-  <div id="message" class="text-center max-w-md mx-4">
-    <h1 id="title" class="text-4xl font-bold text-teal-400 mb-4">Aryan, My Masterpiece</h1>
-    <p id="text" class="text-xl text-gray-800"></p>
+  <div id="container"></div>
+  <div id="message" class="text-center mt-8 max-w-md mx-4">
+    <h1 id="title" class="text-3xl font-bold text-teal-400 mb-4">Aryan, My Guiding Star</h1>
+    <p id="text" class="text-lg text-gray-200"></p>
   </div>
 
   <script>
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = Math.min(window.innerWidth - 40, 600);
-    canvas.height = 400;
+    const width = Math.min(window.innerWidth - 40, 600);
+    const height = 400;
+    const stage = new Konva.Stage({
+      container: 'container',
+      width: width,
+      height: height
+    });
+    const layer = new Konva.Layer();
+    stage.add(layer);
 
-    let brushstrokes = [];
-    let sparkles = [];
-    let heartFormed = false;
+    // Heart-shaped star positions
     const heartPoints = [
-      { x: canvas.width / 2, y: canvas.height / 2 - 50, t: 0 },
-      { x: canvas.width / 2 - 50, y: canvas.height / 2 - 100, t: 0.1 },
-      { x: canvas.width / 2 - 100, y: canvas.height / 2 - 100, t: 0.2 },
-      { x: canvas.width / 2 - 150, y: canvas.height / 2 - 50, t: 0.3 },
-      { x: canvas.width / 2 - 150, y: canvas.height / 2, t: 0.4 },
-      { x: canvas.width / 2 - 100, y: canvas.height / 2 + 50, t: 0.5 },
-      { x: canvas.width / 2, y: canvas.height / 2 + 100, t: 0.6 },
-      { x: canvas.width / 2 + 100, y: canvas.height / 2 + 50, t: 0.7 },
-      { x: canvas.width / 2 + 150, y: canvas.height / 2, t: 0.8 },
-      { x: canvas.width / 2 + 150, y: canvas.height / 2 - 50, t: 0.9 },
-      { x: canvas.width / 2 + 100, y: canvas.height / 2 - 100, t: 1.0 },
-      { x: canvas.width / 2 + 50, y: canvas.height / 2 - 100, t: 1.1 }
+      { x: 300, y: 150 }, { x: 250, y: 100 }, { x: 200, y: 100 },
+      { x: 150, y: 150 }, { x: 150, y: 200 }, { x: 200, y: 250 },
+      { x: 300, y: 300 }, { x: 400, y: 250 }, { x: 450, y: 200 },
+      { x: 450, y: 150 }, { x: 400, y: 100 }, { x: 350, y: 100 }
     ];
 
-    // Create brushstroke effect
-    function createBrushstroke(x, y) {
-      const stroke = document.createElement('div');
-      stroke.className = 'brushstroke';
-      stroke.style.width = '20px';
-      stroke.style.height = '20px';
-      stroke.style.left = `${x}px`;
-      stroke.style.top = `${y}px`;
-      stroke.style.opacity = '0.8';
-      document.body.appendChild(stroke);
-      brushstrokes.push(stroke);
-      setTimeout(() => {
-        stroke.style.opacity = '0';
-        setTimeout(() => {
-          stroke.remove();
-          brushstrokes = brushstrokes.filter(s => s !== stroke);
-        }, 1000);
-      }, 500);
-    }
-
-    // Create sparkle effect
-    function createSparkle(x, y) {
-      const sparkle = document.createElement('div');
-      sparkle.className = 'sparkle';
-      sparkle.style.width = '5px';
-      sparkle.style.height = '5px';
-      sparkle.style.left = `${x}px`;
-      sparkle.style.top = `${y}px`;
-      document.body.appendChild(sparkle);
-      sparkles.push({ element: sparkle, life: 1, vx: (Math.random() - 0.5) * 4, vy: (Math.random() - 0.5) * 4 });
-      setTimeout(() => {
-        sparkle.style.opacity = '0';
-        setTimeout(() => {
-          sparkle.remove();
-          sparkles = sparkles.filter(s => s.element !== sparkle);
-        }, 1000);
-      }, 800);
-    }
-
-    // Update sparkles
-    function updateSparkles() {
-      sparkles.forEach((s, i) => {
-        s.life -= 0.02;
-        s.element.style.left = `${parseFloat(s.element.style.left) + s.vx}px`;
-        s.element.style.top = `${parseFloat(s.element.style.top) + s.vy}px`;
-        s.element.style.opacity = s.life;
-        if (s.life <= 0) {
-          s.element.remove();
-          sparkles.splice(i, 1);
-        }
+    // Random initial star positions
+    const stars = [];
+    for (let i = 0; i < heartPoints.length; i++) {
+      const star = new Konva.Star({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        numPoints: 5,
+        innerRadius: 5,
+        outerRadius: 10,
+        fill: '#ffffff',
+        shadowColor: '#ffffff',
+        shadowBlur: 10,
+        shadowOpacity: 0.5,
+        draggable: false
       });
+      stars.push({ shape: star, target: heartPoints[i], original: { x: star.x(), y: star.y() } });
+      layer.add(star);
     }
 
-    // Animation loop
-    let progress = 0;
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (heartFormed && progress < 1) {
-        progress += 0.02;
-      }
-
-      // Draw heart
-      ctx.beginPath();
-      for (let i = 0; i < heartPoints.length; i++) {
-        const p = heartPoints[i];
-        const nextP = heartPoints[(i + 1) % heartPoints.length];
-        if (progress >= p.t) {
-          if (i === 0) ctx.moveTo(p.x, p.y);
-          else ctx.lineTo(p.x, p.y);
-          if (progress >= p.t + 0.02) {
-            createBrushstroke(p.x + canvas.offsetLeft, p.y + canvas.offsetTop);
-            if (Math.random() > 0.8) createSparkle(p.x + canvas.offsetLeft, p.y + canvas.offsetTop);
+    // Interaction for heart formation
+    let clicked = false;
+    stage.on('click', () => {
+      clicked = !clicked;
+      stars.forEach(star => {
+        const targetPos = clicked ? star.target : star.original;
+        star.shape.to({
+          x: targetPos.x,
+          y: targetPos.y,
+          duration: 1.5,
+          easing: Konva.Easings.EaseInOut,
+          onFinish: () => {
+            if (clicked && star === stars[stars.length - 1]) {
+              for (let i = 0; i < stars.length; i++) {
+                const line = new Konva.Line({
+                  points: [
+                    stars[i].shape.x(), stars[i].shape.y(),
+                    stars[(i + 1) % stars.length].shape.x(), stars[(i + 1) % stars.length].shape.y()
+                  ],
+                  stroke: '#ff6b6b',
+                  strokeWidth: 2,
+                  shadowColor: '#ff6b6b',
+                  shadowBlur: 10
+                });
+                layer.add(line);
+                line.moveToBottom();
+              }
+              document.getElementById('message').classList.add('show');
+              typeMessage();
+            } else if (!clicked) {
+              layer.getChildren(node => node.getClassName() === 'Line').forEach(line => line.destroy());
+              document.getElementById('message').classList.remove('show');
+              document.getElementById('text').textContent = '';
+            }
           }
-        }
-      }
-      if (progress >= 1) {
-        ctx.closePath();
-        ctx.strokeStyle = '#ff6b6b';
-        ctx.lineWidth = 4;
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = '#ff6b6b';
-        ctx.stroke();
-      }
-
-      updateSparkles();
-      requestAnimationFrame(animate);
-    }
-    animate();
-
-    // Interaction
-    canvas.addEventListener('click', () => {
-      if (!heartFormed) {
-        heartFormed = true;
-        document.getElementById('message').classList.add('show');
-        typeMessage();
-      }
+        });
+      });
     });
 
-    // Typing effect
-    const fullText = "You are the color of my soul, painted with love that never fades.";
+    // Typing effect for message
+    const fullText = "Every star in my sky shines for you. Click the stars, and watch my heart take shape—yours, eternally.";
     function typeMessage() {
+      let index = 0;
       const textElement = document.getElementById('text');
-      textElement.innerHTML = fullText.split('').map(char => `<span class="letter">${char}</span>`).join('');
-      const letters = textElement.querySelectorAll('.letter');
-      letters.forEach((letter, i) => {
-        setTimeout(() => {
-          letter.classList.add('show');
-        }, i * 40);
-      });
+      function type() {
+        if (index < fullText.length) {
+          textElement.textContent += fullText.charAt(index);
+          index++;
+          setTimeout(type, 50);
+        }
+      }
+      type();
     }
 
-    // Handle resize
-    window.addEventListener('resize', () => {
-      canvas.width = Math.min(window.innerWidth - 40, 600);
-      canvas.height = 400;
-      heartPoints.forEach(p => {
-        p.x = p.x * canvas.width / 600;
-        p.y = p.y * 400 / 400;
+    // Twinkling effect for stars
+    function twinkle() {
+      stars.forEach(star => {
+        star.shape.to({
+          scaleX: 1 + Math.random() * 0.2,
+          scaleY: 1 + Math.random() * 0.2,
+          duration: 0.5 + Math.random(),
+          onFinish: () => {
+            star.shape.to({
+              scaleX: 1,
+              scaleY: 1,
+              duration: 0.5 + Math.random()
+            });
+          }
+        });
       });
+      setTimeout(twinkle, 1000);
+    }
+    twinkle();
+
+    // Meteor shower effect
+    function createMeteor() {
+      const startX = Math.random() * width;
+      const startY = -10;
+      const endX = startX - 200;
+      const endY = height + 10;
+      const meteor = new Konva.Line({
+        points: [startX, startY, startX, startY],
+        stroke: '#ffffff',
+        strokeWidth: 2,
+        shadowColor: '#ffffff',
+        shadowBlur: 10,
+        shadowOpacity: 0.7
+      });
+      layer.add(meteor);
+      meteor.to({
+        points: [startX, startY, endX, endY],
+        opacity: 0,
+        duration: 0.8,
+        easing: Konva.Easings.Linear,
+        onFinish: () => meteor.destroy()
+      });
+    }
+    setInterval(() => {
+      if (Math.random() > 0.7) createMeteor();
+    }, 500);
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      const newWidth = Math.min(window.innerWidth - 40, 600);
+      stage.width(newWidth);
+      stage.scaleX(newWidth / width);
     });
   </script>
 </body>
